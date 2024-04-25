@@ -1,6 +1,7 @@
 package org.example.models;
 
 import org.example.exceptions.InvalidMoveException;
+import org.example.strategies.WinningAlgorithm;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ public class Game {
     private GameState gameState;
     private Player winner;
     private int nextPlayerMoveIndex;
+    private WinningAlgorithm winningAlgorithm;
 
     public Board getBoard() {
         return board;
@@ -68,6 +70,7 @@ public class Game {
         this.gameState = GameState.IN_PROGRESS;
         this.winner = null;
         this.nextPlayerMoveIndex = 0;
+        this.winningAlgorithm = new WinningAlgorithm();
     }
 
     public void printBoard(){
@@ -83,14 +86,15 @@ public class Game {
         return board.getBoard().get(row).get(col).getCellState().equals(CellState.EMPTY);
     }
 
-    public void makeMove(Game game) throws InvalidMoveException {
+    public void makeMove() throws InvalidMoveException {
         Player currentPlayer = players.get(nextPlayerMoveIndex);
+        System.out.println("It is " + currentPlayer.getName() + "'s move.");
 
         //move that current player wants to make
         Move move = currentPlayer.makeMove(board);
 
         if(!validateMove(move)){
-            throw new InvalidMoveException("Invalid Move by" + currentPlayer.getName());
+            throw new InvalidMoveException("Invalid Move by " + currentPlayer.getName());
         }
 
         int row = move.getCell().getRow();
@@ -102,6 +106,15 @@ public class Game {
 
 
         Move finalMove = new Move(cellToChange,currentPlayer);
+        moves.add(finalMove);
+        nextPlayerMoveIndex = (nextPlayerMoveIndex + 1) % players.size();
+
+        //Check the current move is the winning move or not.
+        if (winningAlgorithm.checkWinner(board, finalMove)) {
+            gameState = GameState.ENDED;
+            winner = currentPlayer;
+        }
+
 
     }
 
